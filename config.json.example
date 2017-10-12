@@ -1,0 +1,20 @@
+{
+    "golos_node" : "wss://ws.golos.io",
+    "userid" : "siberianshaman",
+    "key" : "5de22...",
+    "voter_reward_percent" : 80,
+    "memo" : "Спасибо, что проголосовали за мой пост",
+    "bypass" : [
+        "горох",
+        "на",
+        "случай",
+        "если",
+        "надо",
+        "пропустить",
+        "некоторых",
+        "пользователей",
+        "v0id","robot","vik", "vikx", "vikxx", "vikxxx", "github", "multisig", "ceo", "transfer", "vox", "vox-vpopuli", "vox-porno", "yoyow", "dmarket", "ssh", "uia", "token", "false", "amount", "exchanger", "open", "reblog", "chain-cf", "crypto.democrat", "twitch", "tumblr", "envato", "keychain", "ltd", "channel", "escort", "decentral", "deadpoll", "board", "prostitutki", "stuff", "console", "abort", "morg", "gamers", "icoalert", "germangref", "spermbank", "tester", "snapshot", "unlock", "from", "coinloan", "gmail", "protonmail", "dittrex", "battlehub", "minnowbooster", "private", "zalupa", "degradant", "police", "fsb", "index.html", "drugstore", "penis", "sexshop", "dostavka", "sud", "blockpay", "dappstore", "abuse", "issue", "website", "log", "golospay", "blockexplorer", "sonm", "lepra", "dirty",
+        "on0tole"
+
+    ]
+}
