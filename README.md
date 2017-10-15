@@ -39,7 +39,7 @@ docker run -it --rm --name my-running-script -v PATH_TO_PROJECT:/usr/src/app -w 
 Команда как в демо режиме + приписка "broadcast" в конце
 
 
-P/S
+### P/S
 за основу взят [скрипт](https://golos.io/ru--golos/@ropox/otkat-skript) от @ropox  и переработан
 
 
