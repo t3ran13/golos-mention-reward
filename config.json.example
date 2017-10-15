@@ -3,7 +3,7 @@
     "userid" : "siberianshaman",
     "key" : "5de22...",
     "voter_reward_percent" : 80,
-    "memo" : "Спасибо, что проголосовали за мой пост",
+    "memo" : "поощрение упомянутых авторов в посте {rating_post}",
     "bypass" : [
         "горох",
         "на",

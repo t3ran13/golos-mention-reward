@@ -101,20 +101,21 @@ function sumRshares(content) {
 
 function getUsersFromMeta(content) {
     let meta = JSON.parse(content.json_metadata);
-    return meta;
+    return meta.users;
 }
 
 async function transfer(voter, amount, memo) {
 
-    log.info("transfer " + amount + " to " + voter + " (" + memo + ")");
+    log.info("transfer " + amount + " to " + voter);
     let sent = false;
     let i = 0;
     for(; !sent && i < 3; i++) {
         try {
             if(BROADCAST) {
                 await golos.transfer(KEY, USER, voter, amount, memo);
+                log.info("sent");
             } else {
-                log.info("no broadcasting, no transfer");
+                log.info("NOT sent");
             }
             sent = true;
         } catch(e) {
@@ -125,37 +126,27 @@ async function transfer(voter, amount, memo) {
         log.error("was unable to transfer after 3 tries, exiting");
         process.exit(1);
     }
+    log.info("");
 }
 
-async function doTransfers(content, reward, sum_rshares, memo) {
+async function doTransfers(content, rewardPerUser, users, memo) {
     let sum_transfered = 0;
-    content.active_votes.sort((a,b) =>  {return b.rshares - a.rshares});
-    for(let v of content.active_votes) {
-        log.debug("user " + v.voter);
-        if(global.CONFIG.bypass.includes(v.voter)) {
-            log.info("bypass transfer to " + v.voter);
+    for(let user of users) {
+        log.debug("user " + user);
+        if(global.CONFIG.bypass.includes(user)) {
+            log.info("bypass transfer to " + user);
             continue;
         }
         // bypass own account
-        if(global.CONFIG.userid == v.voter) {
-            log.info("bypass transfer to own account: " + v.voter);
+        if(global.CONFIG.userid == user) {
+            log.info("bypass transfer to own account: " + user);
             continue;
         }
-        const rshares = v.rshares / 1000000;
-        log.debug("rshares = " + rshares);
-        if(rshares <= 0) {
-            log.info(v.voter + " flagged, no payout");
-            continue;
-        }
-        let payout = rshares * reward / sum_rshares;
-        if(payout < 0.001) {
-            log.debug("user's calculated payout < 0.001, increased to 0.001");
-            payout = 0.001;
-        }
-        log.debug("user's payout " + payout);
-        sum_transfered += payout;
-        const amount = payout.toFixed(3) + " GBG";
-        await transfer(v.voter, amount, memo);
+
+        log.debug("user's payout " + rewardPerUser);
+        sum_transfered += rewardPerUser;
+        const amount = rewardPerUser.toFixed(3) + " GBG";
+        await transfer(user, amount, memo);
     }
     log.info("\n\ntransferred " + sum_transfered.toFixed(3) + " GBG");
 }
@@ -182,48 +173,55 @@ async function run() {
     log.info("found reward for the post " + infos.author_reward.toFixed(3) + " GBG" );
     const reward = infos.author_reward * PERCENT / 100;
     log.info("reward to pay " + reward.toFixed(3) + " GBG (" + PERCENT + "%)" );
-    
-    if(reward > user_gbg) {
+
+    let users = getUsersFromMeta(content);
+    let rewardPerUser = Math.floor(reward / users.length * 1000)/1000;
+    if(rewardPerUser < 0.001) {
+        log.debug("user's calculated payout < 0.001, increased to 0.001");
+        rewardPerUser = 0.001;
+    }
+    log.info("Users total " + users.length + " (" + rewardPerUser.toFixed(3) + "GBG per user)");
+
+    if(rewardPerUser * users.length > user_gbg) {
         log.error("!!!!  user balance is not enough for reward payout  !!!");
         if(STRICT) {
             process.exit(1);
         }
     }
 
-    const sum_rshares = sumRshares(content);
-    log.info("Mrshares total " + sum_rshares);
-
-    const memo = MEMO + " " + `https://golos.io/${content.parent_permlink}/@${content.author}/${content.permlink}`;
+    const memo = MEMO.replace('{rating_post}', `https://golos.io/${content.parent_permlink}/@${content.author}/${content.permlink}`);
     log.info("memo = " + memo);
 
     log.info(`
     ${(!BROADCAST?"Broadcasting is not enabled! NO transfers. Add \"broadcast\" parameter":"")}
     Press any key to do transfer or Ctrl-C to terminate...
 `);
-        if(!BROADCAST) {
-            // properly handle SIGINT (CTRL-C in docker), https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
-            if (process.platform === "win32") {
-              var rl = require("readline").createInterface({
-                input: process.stdin,
-                output: process.stdout
-              });
+    // properly handle SIGINT (CTRL-C in docker), https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js
+    if (process.platform === "win32") {
+        var rl = require("readline").createInterface({
+            input: process.stdin,
+            output: process.stdout
+        });
 
-              rl.on("SIGINT", function () {
-                process.emit("SIGINT");
-              });
-            }
+        rl.on("SIGINT", function () {
+            process.emit("SIGINT");
+        });
+    }
 
-            process.on("SIGINT", function () {
-              //graceful shutdown
-              process.exit();
-            });
-            await prompt();
-        } else {
-            log.info("Broadcasting enabled, start transferring in 5 sec.");
-            await global.sleep(5000);
-        }    
+    process.on("SIGINT", function () {
+        //graceful shutdown
+        process.exit();
+    });
 
-    await doTransfers(content, reward, sum_rshares, memo);
+    if(!BROADCAST) {
+
+        await prompt();
+    } else {
+        log.info("Broadcasting enabled, start transferring in 10 sec.");
+        await global.sleep(10000);
+    }
+
+    await doTransfers(content, rewardPerUser, users, memo);
     log.info("DONE");
     process.exit(0);
 }
