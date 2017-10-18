@@ -109,7 +109,7 @@ async function transfer(voter, amount, memo) {
     log.info("transfer " + amount + " to " + voter);
     let sent = false;
     let i = 0;
-    for(; !sent && i < 3; i++) {
+    for(; !sent && i < 10; i++) {
         try {
             if(BROADCAST) {
                 await golos.transfer(KEY, USER, voter, amount, memo);
@@ -122,11 +122,11 @@ async function transfer(voter, amount, memo) {
             log.error(golos.getExceptionCause(e));
         }
     }    
-    if(i >= 3) {
+    if(i >= 10) {
         log.error("was unable to transfer after 3 tries, exiting");
-        process.exit(1);
+        // process.exit(1);
     }
-    log.info("");
+    log.info("------");
 }
 
 async function doTransfers(content, rewardPerUser, users, memo) {
